@@ -40,7 +40,7 @@ jobs:
 
       - name: Transfer files to production server
         run: |
-          rsync -arvz --delete --exclude=.git --exclude=node_modules --exclude=.github ./ unison-isi:/var/www/sislab-api
+          rsync -rvz --delete --exclude=.git --exclude=node_modules --exclude=.github ./ unison-isi:/var/www/sislab-api
 
       - name: SSH to production server and install dependencies
         run: |
