@@ -1,0 +1,47 @@
+name: Deploy to Production Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to Server
+    run-on: ubuntu-latest
+
+    env:
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      BRIDGE_HOSTNAME: ${{ secrets.BRIDGE_HOSTNAME }}
+      PRODUCTION_HOSTNAME: ${{ secrets.PRODUCTION_HOSTNAME }}
+      BRIDGE_USERNAME: ${{ secrets.BRIDGE_USERNAME }}
+      PRODUCTION_USERNAME: ${{ secrets.PRODUCTION_USERNAME }}
+      ENV_VARS: ${{ secrets.PROD_ENV_VARS }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Generate .env file
+        run: |
+          echo "$ENV_VARS" > .env
+          echo "Generated .env file with production environment variables."
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          echo -e "Host unison-bridge\n\tHostName $BRIDGE_HOSTNAME\n\tUser $BRIDGE_USERNAME\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile=/dev/null\n\tForwardAgent yes\n" > ~/.ssh/config
+          echo -e "Host unison-isi\n\tHostName $PRODUCTION_HOSTNAME\n\tUser $PRODUCTION_USERNAME\n\tProxyJump unison-bridge\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile=/dev/null\n\tForwardAgent yes\n" >> ~/.ssh/config
+          chmod 600 ~/.ssh/config
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_ed25519
+
+      - name: Transfer files to production server
+        run: |
+          rsync -arvz --delete --exclude=.git --exclude=node_modules --exclude=.github ./ unison-isi:/var/www/sislab-api
+
+      - name: SSH to production server and install dependencies
+        run: |
+          ssh unison-isi "bash -i -c 'cd /var/www/sislab-api && npm install && pm2 reload sislab-api'"
