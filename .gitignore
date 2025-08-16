@@ -1,5 +1,5 @@
 # Ignorar node_modules para evitar que el repositorio pese tanto
 /node_modules
 
-# .env
+.env
 .env.local

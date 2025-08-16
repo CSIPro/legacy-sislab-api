@@ -52,10 +52,6 @@ class Server {
   }
 
   routes() {
-    this.app.use("/", () => {
-      console.log(process.env);
-      return process.env;
-    });
     this.app.use(this.paths.auth, require("../routes/auth"));
     this.app.use(this.paths.usuarios, require("../routes/usuarios"));
     this.app.use(this.paths.grupos, require("../routes/grupos"));

@@ -2,7 +2,7 @@ const { Schema, model } = require("mongoose");
 
 const PracticaSchema = new Schema({
   number: {
-    type: Number,
+    type: String,
     required: [true, "El número de la práctica es obligatorio."],
   },
   name: {
